@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiz: Manutenção de Computadores</title>
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--tx:#161b2e;--mut:#5b6380;--pri:#3b5bfd;--ok:#16a34a;--bad:#dc2626;--bd:#d9deee;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1220;--card:#1a1f36;--tx:#eef1ff;--mut:#9aa3c7;--pri:#7c93ff;--ok:#34d399;--bad:#f87171;--bd:#2c3356;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f1220;--card:#1a1f36;--tx:#eef1ff;--mut:#9aa3c7;--pri:#7c93ff;--ok:#34d399;--bad:#f87171;--bd:#2c3356;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;display:flex;justify-content:center}
+main{width:100%;max-width:560px;padding:20px 16px 32px}
+h1{font-size:1.5rem;margin:0 0 6px}
+.sub{color:var(--mut);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:20px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.emoji{font-size:3rem;text-align:center}
+.bar{height:8px;background:var(--bd);border-radius:99px;overflow:hidden;margin:6px 0 16px}
+.bar i{display:block;height:100%;background:var(--pri);width:0;transition:width .3s}
+.meta{display:flex;justify-content:space-between;color:var(--mut);font-size:.9rem}
+.q{font-size:1.15rem;font-weight:600;margin:6px 0 16px;line-height:1.35}
+.opt{display:block;width:100%;text-align:left;padding:14px;margin:8px 0;border-radius:12px;border:2px solid var(--bd);background:transparent;color:var(--tx);font-size:1rem;cursor:pointer;font-family:inherit}
+.opt:active{transform:scale(.99)}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,transparent)}
+.opt.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
+.opt:disabled{cursor:default}
+.exp{margin-top:12px;padding:12px;border-radius:12px;background:var(--bg);color:var(--mut);font-size:.95rem;line-height:1.4}
+.btn{display:block;width:100%;margin-top:16px;padding:14px;border:0;border-radius:12px;background:var(--pri);color:#fff;font-size:1.05rem;font-weight:600;cursor:pointer;font-family:inherit}
+.score{font-size:2.6rem;font-weight:800;text-align:center;margin:6px 0}
+.center{text-align:center}
+.hide{display:none}
+</style>
+</head>
+<body>
+<main>
+  <section id="start" class="card center">
+    <div class="emoji">🖥️🔧</div>
+    <h1>Quiz de Manutenção de Computadores</h1>
+    <p class="sub"><span id="n"></span> perguntas sorteadas sobre peças e cuidados com o PC. Quanto você acerta?</p>
+    <button class="btn" id="go">Começar</button>
+  </section>
+
+  <section id="game" class="card hide">
+    <div class="meta"><span id="num"></span><span id="pts"></span></div>
+    <div class="bar"><i id="prog"></i></div>
+    <div class="q" id="q"></div>
+    <div id="opts"></div>
+    <div class="exp hide" id="exp"></div>
+    <button class="btn hide" id="next">Próxima</button>
+  </section>
+
+  <section id="end" class="card center hide">
+    <div class="emoji" id="medal"></div>
+    <div class="score" id="final"></div>
+    <p class="sub" id="msg"></p>
+    <button class="btn" id="again">Jogar de novo</button>
+  </section>
+</main>
+<script>
+const Q=[
+{q:"Qual a vantagem de usar dois pentes de RAM em dual channel?",o:["Mais velocidade de transferência da RAM","Dobra a capacidade total de memória instalada","Reduz o consumo de energia do PC pela metade","Permite misturar RAM de gerações diferentes"],a:0,e:"O dual channel aumenta a taxa de transferência, não a capacidade."},
+{q:"O que é thermal throttling?",o:["Queda de frequência para reduzir o calor","Troca automática da pasta térmica do cooler","Aumento da velocidade das ventoinhas da fonte","Desligamento forçado da fonte de energia"],a:0,e:"Quando esquenta demais, o processador diminui o desempenho para se proteger."},
+{q:"Um pente DDR4 pode ser instalado em um slot DDR5?",o:["Não, o encaixe é diferente","Sim, usando um adaptador de software","Sim, mas só com metade da velocidade","Sim, desde que o PC tenha um SSD"],a:0,e:"O encaixe é diferente de propósito, para evitar instalar a geração errada."},
+{q:"Qual a principal diferença entre um SSD NVMe e um SATA?",o:["O NVMe usa PCIe e é mais rápido","O NVMe tem partes mecânicas internas","O SATA consome muito mais energia que ele","O NVMe só funciona dentro de notebooks"],a:0,e:"O PCIe oferece muito mais banda do que a interface SATA."},
+{q:"O que o TDP de um processador indica?",o:["Calor que deve ser dissipado, em watts","Velocidade máxima do processador em GHz","Número total de núcleos do processador","Tempo de vida útil estimado da peça"],a:0,e:"É uma referência para escolher o cooler e dimensionar a refrigeração."},
+{q:"O que o selo 80 Plus de uma fonte indica?",o:["Eficiência na conversão de energia","Que a fonte entrega apenas 80 watts","Que a fonte possui 80 cabos internos","Que a fonte dura 80 mil horas de uso"],a:0,e:"Quanto maior a eficiência, menos energia vira calor desperdiçado."},
+{q:"Capacitores estufados na placa-mãe indicam o quê?",o:["Desgaste ou defeito da placa-mãe","Que a placa-mãe é nova e de qualidade","Que a BIOS está totalmente atualizada","Que a fonte entrega energia em excesso"],a:0,e:"Capacitores com o topo abaulado ou vazando precisam ser trocados."},
+{q:"Para que serve a tecnologia S.M.A.R.T.?",o:["Monitorar a saúde de HDs e SSDs","Aumentar a velocidade da internet no PC","Comprimir arquivos para ocupar menos espaço","Limpar o registro do sistema operacional"],a:0,e:"Ela registra indicadores do disco, como setores com defeito e temperatura."},
+{q:"Qual a vantagem do GPT em relação ao MBR?",o:["Suporta discos maiores que 2 TB","Deixa o disco rígido bem mais silencioso","Só funciona em pen drives e cartões SD","Elimina a necessidade de BIOS ou UEFI"],a:0,e:"O MBR tem limite de 2 TB e de 4 partições primárias."},
+{q:"O que acontece ao limpar o CMOS (resetar a BIOS)?",o:["Configurações da BIOS voltam ao padrão","Todos os arquivos do HD são apagados","O Windows é reinstalado automaticamente","A senha do Windows é removida do PC"],a:0,e:"É útil quando um ajuste errado impede o PC de ligar."},
+{q:"O que é um slot PCIe x16?",o:["Slot usado por placas de vídeo","Slot de memória RAM de 16 GB","Porta USB com velocidade de 16 Gbps","Conector de energia com 16 pinos"],a:0,e:"Placas de vídeo precisam de muita banda e usam esse slot."},
+{q:"Qual o problema de colocar pasta térmica em excesso?",o:["Pode vazar e sujar o soquete","Aumenta muito o desempenho da CPU","Queima a fonte de alimentação do PC","Não existe problema algum nesse caso"],a:0,e:"Basta uma camada fina: o objetivo é preencher imperfeições, não criar uma camada grossa."},
+{q:"Barulho de “clique, clique” vindo de um HD costuma indicar o quê?",o:["Falha mecânica no disco rígido","Excesso de memória RAM instalada","Atualização automática do sistema","Pasta térmica ressecada no processador"],a:0,e:"É um sinal clássico de HD morrendo. O ideal é copiar os dados o quanto antes."},
+{q:"O que é um gargalo (bottleneck) em um PC?",o:["Uma peça limita as demais","Defeito de fabricação no gabinete","Tipo de cabo usado em placas de vídeo","Excesso de memória RAM instalada"],a:0,e:"Por exemplo, um processador fraco pode não aproveitar uma placa de vídeo potente."},
+{q:"Para que serve o MemTest86?",o:["Testar erros na memória RAM","Medir a temperatura do processador","Limpar o registro do sistema Windows","Testar a tensão da fonte de energia"],a:0,e:"Erros de RAM causam travamentos e telas azuis difíceis de explicar."},
+{q:"O que significa POST ao ligar o computador?",o:["Teste de hardware ao ligar o PC","Programa de otimização de som e vídeo","Protocolo de segurança para redes locais","Placa de ordenação de tarefas do disco"],a:0,e:"POST vem de Power-On Self-Test. Se algo falha, a placa pode emitir bips ou códigos."},
+{q:"Ao trocar de processador, o que deve ser verificado na placa-mãe?",o:["Compatibilidade do soquete","A cor e o desenho da placa-mãe","A quantidade de portas de áudio","A marca do gabinete usado no PC"],a:0,e:"Verifique também chipset e versão de BIOS: uma BIOS antiga pode não reconhecer a CPU nova."},
+{q:"O que é RAID 1?",o:["Espelhamento: dois discos iguais","Soma da capacidade dos dois discos","Divisão de dados só para velocidade","Backup automático feito na nuvem"],a:0,e:"Se um disco falha, o outro mantém os dados. Mas RAID não substitui o backup."},
+{q:"Qual a função do VRM da placa-mãe?",o:["Fornecer a tensão certa à CPU","Armazenar as configurações da BIOS","Converter o sinal de vídeo do PC","Controlar a saída de som da placa"],a:0,e:"VRMs de má qualidade esquentam e limitam o desempenho do processador."},
+{q:"O que é overclock?",o:["Operar acima da frequência de fábrica","Reduzir a velocidade do processador","Atualizar os drivers da placa de vídeo","Trocar a pasta térmica do cooler"],a:0,e:"Dá mais desempenho, mas aumenta consumo e calor e exige boa refrigeração."},
+{q:"Para que serve a memória ECC?",o:["Corrigir erros na memória","Aumentar o brilho do monitor LCD","Guardar as configurações da BIOS","Acelerar a leitura do SSD NVMe"],a:0,e:"É comum em servidores: em sistemas críticos, um bit trocado pode corromper dados."},
+{q:"Qual a função do chipset?",o:["Comunicação entre CPU e periféricos","Refrigerar o processador em cargas altas","Fornecer energia à placa de vídeo","Guardar os arquivos do usuário"],a:0,e:"Ele define quantas portas USB, SATA e slots PCIe a placa suporta."},
+{q:"Qual o risco de a energia cair durante a atualização da BIOS?",o:["Corromper a BIOS da placa","Apagar todos os arquivos do HD","Nada, o processo é sempre seguro","Queimar o monitor conectado ao PC"],a:0,e:"Por isso a atualização deve ser feita com cuidado, de preferência com nobreak."},
+{q:"Qual conector alimenta uma placa de vídeo potente direto da fonte?",o:["PCIe de 6 ou 8 pinos","SATA de dados de 7 pinos","Cabo P2 de fone de ouvido","Conector de rede RJ-45"],a:0,e:"Placas de vídeo potentes puxam mais energia do que o slot PCIe consegue entregar."},
+{q:"O que é o Secure Boot?",o:["Só carrega sistemas confiáveis","Um antivírus que roda na nuvem","Um backup automático dos arquivos","Um modo de economia de energia"],a:0,e:"Recurso da UEFI que ajuda a impedir que programas maliciosos sejam carregados na inicialização."},
+{q:"Por que o gabinete deve ter entrada de ar na frente e saída atrás ou em cima?",o:["Renova o ar e remove o calor","Deixa o gabinete mais bonito","Reduz o gasto de energia da fonte","Evita o ruído das ventoinhas"],a:0,e:"O ar quente sobe, e um fluxo bem planejado remove o calor com eficiência."},
+{q:"O que é undervolt?",o:["Reduzir a tensão da peça","Aumentar a tensão para ganhar velocidade","Desligar o processador por completo","Trocar a fonte por uma mais fraca"],a:0,e:"Quando estável, mantém o desempenho com menos calor e menos consumo."},
+{q:"O PC liga, as ventoinhas giram, mas não há vídeo nem bips. O que verificar primeiro?",o:["Reencaixar RAM e placa de vídeo","Formatar o PC imediatamente","Trocar de monitor todas as vezes","Comprar uma fonte nova de imediato"],a:0,e:"Mau contato em RAM e GPU é uma das causas mais comuns desse sintoma."}
+];
+const $=id=>document.getElementById(id);
+const ROUND=20;let i=0,s=0,R=[];
+const shuffle=a=>{a=[...a];for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
+function start(){R=shuffle(Q).slice(0,ROUND).map(c=>{const t=c.o[c.a];const o=shuffle(c.o);return{...c,o,a:o.indexOf(t)}});i=0;s=0;show("game");render()}
+$("n").textContent=Math.min(ROUND,Q.length);
+function show(id){["start","game","end"].forEach(x=>$(x).classList.toggle("hide",x!==id))}
+function render(){
+  const c=R[i];
+  $("num").textContent="Pergunta "+(i+1)+" de "+R.length;
+  $("pts").textContent="Acertos: "+s;
+  $("prog").style.width=(i/R.length*100)+"%";
+  $("q").textContent=c.q;
+  $("exp").classList.add("hide");$("next").classList.add("hide");
+  $("opts").innerHTML="";
+  c.o.forEach((t,k)=>{
+    const b=document.createElement("button");
+    b.className="opt";b.textContent=t;
+    b.onclick=()=>answer(k);
+    $("opts").appendChild(b);
+  });
+}
+function answer(k){
+  const c=R[i],bs=[...$("opts").children];
+  bs.forEach((b,j)=>{b.disabled=true;if(j===c.a)b.classList.add("ok")});
+  if(k===c.a){s++}else{bs[k].classList.add("bad")}
+  $("pts").textContent="Acertos: "+s;
+  $("exp").textContent=(k===c.a?"✅ Correto! ":"❌ Não foi dessa vez. ")+c.e;
+  $("exp").classList.remove("hide");
+  $("next").textContent=i===R.length-1?"Ver resultado":"Próxima";
+  $("next").classList.remove("hide");
+}
+function finish(){
+  show("end");
+  $("final").textContent=s+" / "+R.length;
+  const m=s/R.length>=.9?["🏆","Técnico nível expert! Você manda muito em hardware."]:s/R.length>=.6?["🥈","Muito bem! Você já entende bastante de manutenção."]:s/R.length>=.3?["🥉","Bom começo! Dá uma olhada nas peças e tente de novo."]:["🔧","Todo técnico começa do zero. Tente outra vez!"];
+  $("medal").textContent=m[0];$("msg").textContent=m[1];
+}
+$("go").onclick=start;
+$("next").onclick=()=>{i++;i<R.length?render():finish()};
+$("again").onclick=start;
+</script>
+</body>
+</html>
